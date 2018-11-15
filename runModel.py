@@ -106,6 +106,6 @@ K = 10
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)
-for i in range(K):
+# for i in range(K):
     # ks = [k for k,v in a if v == i]
     # plt.imshow(pics_l[random.choice(ks)].reshape((H, W)))

@@ -14,6 +14,7 @@ import pprint as pp
 from os import listdir
 
 data_fn = "data/cohn-kanade"
+img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 pics = {}
 pics_l = []
 
@@ -24,7 +25,8 @@ pics_l = []
 #         sess_fn = subj_fn + "/" + sess
 #         for p in listdir(sess_fn):
 #             pic_fn = sess_fn + "/" + p
-sz = 0
+sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
+H, W = io.imread(img_ex_fn, as_grey=True).shape
 cnt = 0
 for subj in listdir(data_fn):
     subj_fn = data_fn + "/" + subj
@@ -39,7 +41,8 @@ for subj in listdir(data_fn):
             sz = img.shape
             pics_l.append(img)
     cnt += 1
-    if cnt > 1: break
+    #if cnt > 1:
+    break
 pp.pprint(pics)
 
 
@@ -103,3 +106,6 @@ K = 10
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)
+for i in range(K):
+    # ks = [k for k,v in a if v == i]
+    # plt.imshow(pics_l[random.choice(ks)].reshape((H, W)))

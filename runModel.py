@@ -36,13 +36,13 @@ for subj in listdir(data_fn):
         pics[subj][sess] = []
         for p in listdir(sess_fn):
             pic_fn = sess_fn + "/" + p
-            img = io.imread(pic_fn, as_grey=True).flatten()
-            pics[subj][sess].append(img)
-            sz = img.shape
-            pics_l.append(img)
+            img = io.imread(pic_fn, as_grey=True)
+            H_i, W_i = img.shape
+            if H_i == H and W_i == W:
+                pics[subj][sess].append(img.flatten())
+                pics_l.append(img.flatten())
     cnt += 1
-    #if cnt > 1:
-    break
+    if cnt > 20: break
 pp.pprint(pics)
 
 
@@ -107,5 +107,9 @@ c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)
 for i in range(K):
+    plt.subplot(4, 3, i + 1)
+    plt.imshow(c[i].reshape((H, W)), cmap='gray')
+    plt.title("%.2f" % i)
     # ks = [k for k,v in a if v == i]
     # plt.imshow(pics_l[random.choice(ks)].reshape((H, W)))
+plt.show()

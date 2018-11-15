@@ -4,3 +4,5 @@ import sys
 
 
 print("second commit")
+
+data_fn = "data/cohn-kanade/"

@@ -28,6 +28,7 @@ pics_l = []
 sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
 H, W = io.imread(img_ex_fn, as_grey=True).shape
 cnt = 0
+num_subj = 20
 for subj in listdir(data_fn):
     subj_fn = data_fn + "/" + subj
     pics[subj] = {}
@@ -42,7 +43,7 @@ for subj in listdir(data_fn):
                 pics[subj][sess].append(img.flatten())
                 pics_l.append(img.flatten())
     cnt += 1
-    if cnt > 20: break
+    if cnt >= num_subj: break
 pp.pprint(pics)
 
 
@@ -102,7 +103,7 @@ def kmeans(examples, K, maxIters):
         maxIters -= 1
     return centers, assignments, rec_loss
 
-K = 6
+K = 2
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)

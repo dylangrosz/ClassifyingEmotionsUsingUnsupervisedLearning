@@ -36,7 +36,7 @@ for subj in listdir(data_fn):
         pics[subj][sess] = []
         for p in listdir(sess_fn):
             pic_fn = sess_fn + "/" + p
-            img = io.imread(pic_fn, as_grey=True)
+            img = io.imread(pic_fn, as_gray=True)
             H_i, W_i = img.shape
             if H_i == H and W_i == W:
                 pics[subj][sess].append(img.flatten())
@@ -102,7 +102,7 @@ def kmeans(examples, K, maxIters):
         maxIters -= 1
     return centers, assignments, rec_loss
 
-K = 10
+K = 6
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)

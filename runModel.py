@@ -1,12 +1,9 @@
-import numpy as np
 import sys
 from time import time
 from collections import defaultdict
-
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-from matplotlib import rc
 from skimage import io
 import random
 import pprint as pp

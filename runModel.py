@@ -27,21 +27,29 @@ pics_l = []
 #             pic_fn = sess_fn + "/" + p
 sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
 H, W = io.imread(img_ex_fn, as_grey=True).shape
+
+def norm_and_flatten(img):
+    im_flat = img.flatten()
+    return (im_flat - np.mean(im_flat)) / np.std(im_flat)
 cnt = 0
-num_subj = 20
+num_subj = 10000
 for subj in listdir(data_fn):
     subj_fn = data_fn + "/" + subj
     pics[subj] = {}
     for sess in listdir(subj_fn):
         sess_fn = subj_fn + "/" + sess
         pics[subj][sess] = []
-        for p in listdir(sess_fn):
-            pic_fn = sess_fn + "/" + p
-            img = io.imread(pic_fn, as_gray=True)
-            H_i, W_i = img.shape
-            if H_i == H and W_i == W:
-                pics[subj][sess].append(img.flatten())
-                pics_l.append(img.flatten())
+        sess_l = listdir(sess_fn)
+        for p_i in range(len(sess_l)):
+            if p_i == len(listdir(sess_fn)) - 1:
+                pic_fn = sess_fn + "/" + sess_l[p_i]
+                img = io.imread(pic_fn, as_gray=True)
+                H_i, W_i = img.shape
+                if H_i == H and W_i == W:
+                    img = norm_and_flatten(img)
+                    pics[subj][sess].append(img)
+                    pics_l.append(img)
+    print(cnt)
     cnt += 1
     if cnt >= num_subj: break
 pp.pprint(pics)
@@ -103,7 +111,61 @@ def kmeans(examples, K, maxIters):
         maxIters -= 1
     return centers, assignments, rec_loss
 
-K = 2
+
+def kmeans_fast(features, k, num_iters=100):
+    """ Use kmeans algorithm to group features into k clusters.
+
+    This function makes use of numpy functions and broadcasting to speed up the
+    first part(cluster assignment) of kmeans algorithm.
+
+    Hints
+    - You may find np.repeat and np.argmin useful
+
+    Args:
+        features - Array of N features vectors. Each row represents a feature
+            vector.
+        k - Number of clusters to form.
+        num_iters - Maximum number of iterations the algorithm will run.
+
+    Returns:
+        assignments - Array representing cluster assignment of each point.
+            (e.g. i-th point is assigned to cluster assignments[i])
+    """
+    N = len(features)
+    # Randomly initalize cluster centers
+    centers, assignments = np.array([features[i] for i in sorted(random.sample(range(0, len(features)), K))]), {}
+    _, dim = centers.shape
+
+    tile_f = np.tile(features, (k, 1))
+    for n in range(num_iters):
+        tile_c = np.repeat(centers, N, axis=0)
+        tile_sub = np.subtract(tile_f, tile_c)
+        dist = np.linalg.norm(tile_sub, axis=1).reshape(k, N)
+        assignments_new = np.argmin(dist, axis=0)
+        if np.array_equal(assignments, assignments_new):
+            break
+        else:
+            assignments = assignments_new
+
+        old_centers, new_stats = centers[:], []
+        for j in range(0, k):
+            new_stats.append([0, []])
+        for i in range(len(features)):
+            c_ind = int(assignments[i])
+            num, sum_vec = new_stats[c_ind]
+            sum_vec_new = np.add(sum_vec, features[i]) if len(sum_vec) > 0 else features[i]
+            new_stats[c_ind] = [num + 1, sum_vec_new]
+
+        new_centers = np.zeros((k, dim))
+        for j in range(0, k):
+            num, new_center = new_stats[j]
+            new_center = np.divide(new_center, num)
+            new_centers[j] = np.array(new_center)
+        centers = new_centers
+
+    return centers, assignments, 0
+
+K = 10
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)

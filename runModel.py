@@ -46,7 +46,7 @@ for subj in listdir(data_fn):
                     img = norm_and_flatten(img)
                     pics[subj][sess].append(img)
                     pics_l.append(img)
-    print(cnt)
+    #print(cnt)
     cnt += 1
     if cnt >= num_subj: break
 pp.pprint(pics)
@@ -166,7 +166,8 @@ K = 10
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)
 pp.pprint(a)
-# for i in range(K):
-    # ks = [k for k,v in a if v == i]
-    # plt.imshow(pics_l[random.choice(ks)].reshape((H, W)))
+for i in range(K):
+    plt.subplot(4, 3, i + 1)
+    plt.imshow(c[i].reshape((H, W)), cmap='gray')
+    plt.title("%.2f" % i)
 plt.show()

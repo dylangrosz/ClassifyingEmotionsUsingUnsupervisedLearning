@@ -55,7 +55,7 @@ def dmp_featureExtract(image):
     # average left/right eye, mouth and nose, we pull out
     # the HOG and literal window of that area and add to
     # a flattened feature vector
-    features = []
+    features = np.array([])
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
 
@@ -97,8 +97,11 @@ def dmp_featureExtract(image):
                     roi = cv2.resize(roi, (100,33))
 
                 # add facial feature
-                features.append(roi)
+                #print(roi.flatten())
+                features = np.append(features,roi.flatten())
+                #print(features)
 
+    print(features)
     return features
 
 def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True):
@@ -119,6 +122,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True)
             features_p = np.append(features_p, hogFeature)
     if dmp:
         dmp_features = dmp_featureExtract(img)
+        #print(dmp_features)
         features_p = np.append(features_p, dmp_features)
     return features_p
 

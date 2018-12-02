@@ -58,8 +58,9 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
         pixel_per_cell = 8
         hogFeature, hogImage = feature.hog(img, pixels_per_cell=(pixel_per_cell, pixel_per_cell), visualise=True,
                                            feature_vector=True)
+        print(hogFeature)
         hog_flat = np.array(hogImage).flatten()
-        #        features_p = np.append(features_p, hog_flat)
+        features_p = np.append(features_p, hog_flat)
         features_p = np.append(features_p, hogFeature)
     if dmp:
         dmp_features = dmp_featureExtract(img)
@@ -67,7 +68,7 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
 
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = True, True
+savedYet, toSave = False, True
 cnt = 0
 num_subj = 25
 if not savedYet:
@@ -84,10 +85,9 @@ if not savedYet:
                     img = io.imread(pic_fn, as_gray=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False)
+                        pic_f = featureExtract(img, literal=False, norm=False)
                         if toSave:
-                            with open(feature_fn + "/" + sess + "_" + sess_l[p_i] + "FE.pkl", 'wb') as handle:
-                                #     pkl.dump(img, handle)
+                            with open(feature_fn + "/" + sess + "_" + sess_l[p_i] + "FE", 'wb') as handle:
                                 np.save(handle, img)
                         pics[subj][sess].append(img)
                         print(pic_f.shape)
@@ -108,7 +108,7 @@ print("done")
 pp.pprint(pics_l)
 
 
-K = 4
+K = 7
 c, a, r_l = kmeans(pics_l, K, 100, sz)
 print(c)
 pp.pprint(a)
@@ -122,16 +122,16 @@ for i in a:
 
 pp.pprint(center_assignments)
 
-
+plt_assignments = center_assignments.copy()
 for i in range(K):
-    plt.subplot(4, 5, 3*i + 1)
-#    plt.imshow(c[i][0:(H * W)].reshape((H, W)), cmap='gray')
-    plt.imshow(pics_l[random.choice(center_assignments[i])].reshape((H, W)), cmap='gray')
-    plt.title("%.2f" % i)
-    plt.subplot(4, 3, i + 2)
-    plt.imshow(pics_l[random.choice(center_assignments[i])].reshape((H, W)), cmap='gray')
-    plt.title("%.2f" % i)
-    plt.subplot(4, 3, i + 3)
-    plt.imshow(pics_l[random.choice(center_assignments[i])].reshape((H, W)), cmap='gray')
-    plt.title("%.2f" % i)
-plt.show()
+    if i in center_assignments:
+        num_exemplars = 9
+        for iter_img in range(num_exemplars):
+            if iter_img < len(plt_assignments[i]):
+                plt.subplot(3, 3, iter_img + 1)
+                r_choice = random.choice(plt_assignments[i])
+                plt.imshow(pics_l[r_choice].reshape((H, W)), cmap='gray')
+                ind = plt_assignments[i].index(r_choice)
+                plt_assignments[i].pop(ind)
+                plt.title("%.2f" % i)
+        plt.show()

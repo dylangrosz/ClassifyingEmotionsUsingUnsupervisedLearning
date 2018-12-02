@@ -29,6 +29,8 @@ import imutils
 import dlib
 import cv2
 
+
+
 from os import listdir
 
 data_fn = "data/cohn-kanade"
@@ -36,7 +38,7 @@ feature_fn = "data/featureExtracted"
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 
 pics = {}
-pics_l = []
+pics_f, pics_literal = [], []
 
 # To get to every image, use this loop:
 # for subj in listdir(data_fn):
@@ -79,7 +81,7 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
 
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = False, True
+savedYet, toSave = True, True
 cnt = 0
 num_subj = 25
 if not savedYet:
@@ -102,7 +104,9 @@ if not savedYet:
                                 np.save(handle, img)
                         pics[subj][sess].append(img)
                         print(pic_f.shape)
-                        pics_l.append(pic_f)
+                        pics_f.append(pic_f)
+                        pics_literal.append(img)
+                        sz = pic_f.shape[0]
 
         print(cnt)
         cnt += 1
@@ -112,15 +116,28 @@ else:
     for f_n in listdir(feature_fn):
         with open(feature_fn + "/" + f_n, 'rb') as handle:
             # img = pkl.load(handle)
-            img = np.load(handle).flatten()
-            pics_l.append(img)
+            p_feature = np.load(handle).flatten()
+            pics_f.append(p_feature)
+    for subj in listdir(data_fn):
+        subj_fn = data_fn + "/" + subj
+        pics[subj] = {}
+        for sess in listdir(subj_fn):
+            sess_fn = subj_fn + "/" + sess
+            pics[subj][sess] = []
+            sess_l = listdir(sess_fn)
+            for p_i in range(len(sess_l)):
+                if p_i == len(listdir(sess_fn)) - 1:
+                    pic_fn = sess_fn + "/" + sess_l[p_i]
+                    img = io.imread(pic_fn, as_gray=True)
+                    pics_literal.append(img)
+
 
 print("done")
-pp.pprint(pics_l)
+pp.pprint(pics_f)
 
 
 K = 7
-c, a, r_l = kmeans(pics_l, K, 100, sz)
+c, a, r_l = kmeans(pics_f, K, 100, sz)
 print(c)
 pp.pprint(a)
 center_assignments = {}
@@ -141,7 +158,7 @@ for i in range(K):
             if iter_img < len(plt_assignments[i]):
                 plt.subplot(3, 3, iter_img + 1)
                 r_choice = random.choice(plt_assignments[i])
-                plt.imshow(pics_l[r_choice].reshape((H, W)), cmap='gray')
+                plt.imshow(pics_literal[r_choice].reshape((H, W)), cmap='gray')
                 ind = plt_assignments[i].index(r_choice)
                 plt_assignments[i].pop(ind)
                 plt.title("%.2f" % i)

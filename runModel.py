@@ -17,9 +17,7 @@ import scipy
 import matplotlib.pyplot as plt
 from skimage import io, feature
 import random
-import _pickle as pkl
 import pprint as pp
-from tempfile import TemporaryFile
 from ourKmeans import *
 from detectFaceParts import *
 # import necessary packages for detecting face parts
@@ -51,16 +49,12 @@ sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
 H, W = io.imread(img_ex_fn, as_grey=True).shape
 
 def dmp_featureExtract(image):
-    # takes image and after adding a HOG feature of an
-    # average left/right eye, mouth and nose, we pull out
-    # the HOG and literal window of that area and add to
-    # a flattened feature vector
     features = np.array([])
     detector = dlib.get_frontal_face_detector()
-    predictor = dlib.shape_predictor("shape_predictor_68_face_landmarks.dat")
+    predictor = dlib.shape_predictor("detectFaceParts/shape_predictor_68_face_landmarks.dat")
 
     gray = image
-    edges = cv2.Canny(image ,60,200)
+    #edges = cv2.Canny(image ,60,200)
 
     #gray = imutils.resize(image, width=500)
     #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
@@ -78,7 +72,7 @@ def dmp_featureExtract(image):
             if name != "jaw":
                 # clone the original image so we can draw on it, then
                 # display the name of the face part on the image
-                clone = edges.copy()
+                clone = image.copy()#edges.copy()
                 cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
                     0.7, (0, 0, 255), 2)
 
@@ -89,7 +83,7 @@ def dmp_featureExtract(image):
 
                 # extract the ROI of the face region as a separate image
                 (x, y, w, h) = cv2.boundingRect(np.array([shape[i:j]]))
-                roi = edges[y:y + h, x:x + w]
+                roi = image[y:y + h, x:x + w]
                 #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
                 if name == "nose":
                     roi = cv2.resize(roi, (50,100))
@@ -98,10 +92,15 @@ def dmp_featureExtract(image):
 
                 # add facial feature
                 #print(roi.flatten())
+                roi = (roi - np.mean(roi)) / np.std(roi)
+                # plt.subplot(1, 1, 1)
+                # plt.imshow(roi, cmap='gray')
+                # plt.show()
+
                 features = np.append(features,roi.flatten())
                 #print(features)
 
-    print(features)
+    #print(features)
     return features
 
 def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True):
@@ -144,7 +143,7 @@ if not savedYet:
                     img = io.imread(pic_fn, as_gray=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False, norm=False, hogI=False)
+                        pic_f = featureExtract(img, literal=True, norm=False, hogF=False, hogI=False, dmp=False)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)

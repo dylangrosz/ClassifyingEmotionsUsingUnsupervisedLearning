@@ -4,7 +4,6 @@ from collections import defaultdict
 import numpy as np
 import scipy
 import matplotlib.pyplot as plt
-<<<<<<< Updated upstream
 from skimage import io, feature, color
 import random
 import _pickle as pkl
@@ -378,7 +377,6 @@ def kmeans_fast(features, k, num_iters=100):
 
     return centers, assignments, 0
 
-<<<<<<< Updated upstream
 K = 4
 c, a, r_l = kmeans(pics_l, K, 100)
 print(c)

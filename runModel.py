@@ -29,7 +29,7 @@ pics_l = []
 sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
 H, W = io.imread(img_ex_fn, as_grey=True).shape
 
-def dmp(image):
+def dmp_featureExtract(image):
     # takes image and after adding a HOG feature of an
     # average left/right eye, mouth and nose, we pull out
     # the HOG and literal window of that area and add to
@@ -51,7 +51,7 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
         #        features_p = np.append(features_p, hog_flat)
         features_p = np.append(features_p, hogFeature)
     if dmp:
-        dmp_features = dmp(img)
+        dmp_features = dmp_featureExtract(img)
     return features_p
 
 

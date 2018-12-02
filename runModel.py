@@ -1,3 +1,12 @@
+'''
+To install dlib:
+    brew install cmake
+    brew install boost
+    pip install dlib
+To install imutils:
+    pip install --upgrade imutils
+'''
+
 import sys
 from time import time
 from collections import defaultdict
@@ -10,6 +19,7 @@ import _pickle as pkl
 import pprint as pp
 from tempfile import TemporaryFile
 from ourKmeans import *
+from face_recognition.examples.find_facial_features_in_picture import *
 
 from os import listdir
 

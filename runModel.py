@@ -57,21 +57,22 @@ def dmp_featureExtract(image):
     # a flattened feature vector
     return []
 
-def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
+def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True):
     features_p = np.array([])
     if literal:
         features_p = img.flatten()
     if norm:
         im_flat = img.flatten()
         features_p = (im_flat - np.mean(im_flat)) / np.std(im_flat)
-    if hog:
+    if hogF or hogI:
         pixel_per_cell = 8
         hogFeature, hogImage = feature.hog(img, pixels_per_cell=(pixel_per_cell, pixel_per_cell), visualise=True,
                                            feature_vector=True)
-        print(hogFeature)
         hog_flat = np.array(hogImage).flatten()
-        features_p = np.append(features_p, hog_flat)
-        features_p = np.append(features_p, hogFeature)
+        if hogI:
+            features_p = np.append(features_p, hog_flat)
+        if hogF:
+            features_p = np.append(features_p, hogFeature)
     if dmp:
         dmp_features = dmp_featureExtract(img)
     return features_p
@@ -81,7 +82,7 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
 
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = True, True
+savedYet, toSave = False, True
 cnt = 0
 num_subj = 25
 if not savedYet:
@@ -98,10 +99,10 @@ if not savedYet:
                     img = io.imread(pic_fn, as_gray=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False, norm=False)
+                        pic_f = featureExtract(img, literal=False, norm=False, hogI=False)
                         if toSave:
-                            with open(feature_fn + "/" + sess + "_" + sess_l[p_i] + "FE", 'wb') as handle:
-                                np.save(handle, img)
+                            with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
+                                np.save(handle, pic_f)
                         pics[subj][sess].append(img)
                         print(pic_f.shape)
                         pics_f.append(pic_f)

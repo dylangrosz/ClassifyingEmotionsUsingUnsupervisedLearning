@@ -76,7 +76,7 @@ if not savedYet:
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
                         pic_f = featureExtract(img, literal=False, norm=False)
-                        if toSave: 
+                        if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i] + "FE", 'wb') as handle:
                                 np.save(handle, img)
                         pics[subj][sess].append(img)

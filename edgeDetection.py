@@ -246,7 +246,7 @@ for subj in listdir(data_fn):
                 edges = intelligent_resize(edges, 0, -W//2, rgb_weights, mask, mask_weight)
 
                 edges = color.rgb2gray(edges)
-                
+
                 #plt.subplot(121),plt.imshow(img,cmap = 'gray')
                 #plt.title('Original Image'), plt.xticks([]), plt.yticks([])
                 #plt.subplot(122),plt.imshow(edges,cmap = 'gray')

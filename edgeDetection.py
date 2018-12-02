@@ -19,7 +19,7 @@ import _pickle as pkl
 import pprint as pp
 from tempfile import TemporaryFile
 from ourKmeans import *
-from face_recognition.examples.find_facial_features_in_picture import *
+from detectFaceParts import *
 
 # pip install opencv-python
 import cv2

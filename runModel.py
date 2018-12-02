@@ -5,6 +5,8 @@ To install dlib:
     pip install dlib
 To install imutils:
     pip install --upgrade imutils
+
+pip install opencv-python
 '''
 
 import sys
@@ -19,7 +21,13 @@ import _pickle as pkl
 import pprint as pp
 from tempfile import TemporaryFile
 from ourKmeans import *
-from face_recognition.examples.find_facial_features_in_picture import *
+from detectFaceParts import *
+# import necessary packages for detecting face parts
+from imutils import face_utils
+import argparse
+import imutils
+import dlib
+import cv2
 
 from os import listdir
 
@@ -65,6 +73,9 @@ def featureExtract(img, literal=True, norm=True, hog=True, dmp=True):
     if dmp:
         dmp_features = dmp_featureExtract(img)
     return features_p
+
+
+
 
 
 # ADJUST THESE FOR SAVING AND REUSING

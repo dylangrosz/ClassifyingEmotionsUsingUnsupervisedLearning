@@ -141,7 +141,6 @@ if not savedYet:
                 if p_i == len(listdir(sess_fn)) - 1:
                     pic_fn = sess_fn + "/" + sess_l[p_i]
                     img = io.imread(pic_fn, as_grey=True)
-                    print(img.shape)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
                         pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=True)

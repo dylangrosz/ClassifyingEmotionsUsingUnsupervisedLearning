@@ -141,7 +141,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True)
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = True, True
+savedYet, toSave = False, True
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -159,7 +159,7 @@ if not savedYet:
                     img = io.imread(pic_fn, as_grey=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=True, norm=False, hogF=False, hogI=False, dpm=False)
+                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=True)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)
@@ -200,7 +200,7 @@ print("done")
 pp.pprint(pics_f)
 
 
-K = 6
+K = 12
 c, a, r_l = kmeans(pics_f, K, 100, sz)
 print(c)
 print(a)

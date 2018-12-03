@@ -31,7 +31,7 @@ import csv
 from os import listdir
 
 data_fn = "data/cohn-kanade"
-feature_fn = "data/featureExtracted"
+feature_fn = "data/hogFeature" #"data/featureExtracted"
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -54,8 +54,14 @@ f = open(labels)
 reader = csv.reader(f)
 for row in reader:
     if (len(row[0]) != 3):
-        row[0] = "0" + row[0]
+        if row[0][-2:] == "10" and row[1] == "001":
+            row[0] = "010"
+        else:
+            row[0] = "0" + row[0]
+    #print(row[0] + "_" + row[1])
     emotions_dict[row[0] + "_" + row[1]] = row[2]
+emotions_dict["094_002"] = "na"
+emotions_dict["100_001"] = "na"
 
 def dpm_featureExtract(image):
     features = np.array([])
@@ -137,7 +143,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True)
 # ADJUST THESE FOR SAVING AND REUSING
 savedYet, toSave = True, True
 cnt = 0
-num_subj = 25
+num_subj = 1000
 if not savedYet:
     for subj in listdir(data_fn):
         subj_fn = data_fn + "/" + subj
@@ -153,12 +159,12 @@ if not savedYet:
                     img = io.imread(pic_fn, as_grey=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dmp=True)
+                        pic_f = featureExtract(img, literal=True, norm=False, hogF=False, hogI=False, dpm=False)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)
                         pics[subj][sess].append(img)
-                        #print(pic_f.shape)
+                        print(pic_f.shape)
                         pics_f.append(pic_f)
                         pics_literal.append(img)
                         sz = pic_f.shape[0]
@@ -180,6 +186,7 @@ else:
         pics[subj] = {}
         for sess in listdir(subj_fn):
             sess_fn = subj_fn + "/" + sess
+            emotions_labels.append(emotions_dict[subj_fn[-3:] + "_" + sess])
             pics[subj][sess] = []
             sess_l = listdir(sess_fn)
             for p_i in range(len(sess_l)):
@@ -216,14 +223,17 @@ for k in center_emotions:
     cluster_labels[k] = max(set(center_emotions[k]), key=center_emotions[k].count)
 
 print(cluster_labels)
+total_mislabel, total_ex = 0, 0
 for c in cluster_labels:
     emotion = cluster_labels[c]
     mislabel = 0
     for label in center_emotions[c]:
-        if label != emotion:
+        if label != emotion and label != "na":
             mislabel += 1
+            total_mislabel += 1
+        total_ex = total_ex + 1 if label != "na" else total_ex
     print("Success rate for " + emotion + ": " + str(1 - (mislabel / len(center_emotions[c]))))
-
+print("Overall success rate: " + str(1 - (total_mislabel / total_ex)))
 plt_assignments = center_assignments.copy()
 for i in range(K):
     if i in center_assignments:
@@ -232,6 +242,7 @@ for i in range(K):
             if iter_img < len(plt_assignments[i]):
                 plt.subplot(3, 3, iter_img + 1)
                 r_choice = random.choice(plt_assignments[i])
+                #print(pics_literal[r_choice].shape)
                 plt.imshow(pics_literal[r_choice].reshape((H, W)), cmap='gray')
                 ind = plt_assignments[i].index(r_choice)
                 plt_assignments[i].pop(ind)

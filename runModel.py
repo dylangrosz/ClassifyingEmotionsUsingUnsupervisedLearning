@@ -48,7 +48,7 @@ pics_f, pics_literal = [], []
 sz = io.imread(img_ex_fn, as_grey=True).flatten().shape[0]
 H, W = io.imread(img_ex_fn, as_grey=True).shape
 
-def dmp_featureExtract(image):
+def dpm_featureExtract(image):
     features = np.array([])
     detector = dlib.get_frontal_face_detector()
     predictor = dlib.shape_predictor("detectFaceParts/shape_predictor_68_face_landmarks.dat")
@@ -103,7 +103,7 @@ def dmp_featureExtract(image):
     #print(features)
     return features
 
-def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True):
+def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True):
     features_p = np.array([])
     if literal:
         features_p = img.flatten()
@@ -119,10 +119,10 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dmp=True)
             features_p = np.append(features_p, hog_flat)
         if hogF:
             features_p = np.append(features_p, hogFeature)
-    if dmp:
-        dmp_features = dmp_featureExtract(img)
-        #print(dmp_features)
-        features_p = np.append(features_p, dmp_features)
+    if dpm:
+        dpm_features = dpm_featureExtract(img)
+        #print(dpm_features)
+        features_p = np.append(features_p, dpm_features)
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
@@ -140,10 +140,11 @@ if not savedYet:
             for p_i in range(len(sess_l)):
                 if p_i == len(listdir(sess_fn)) - 1:
                     pic_fn = sess_fn + "/" + sess_l[p_i]
-                    img = io.imread(pic_fn, as_gray=True)
+                    img = io.imread(pic_fn, as_grey=True)
+                    print(img.shape)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=True, norm=False, hogF=False, hogI=False, dmp=False)
+                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=True)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)
@@ -163,6 +164,8 @@ else:
             # img = pkl.load(handle)
             p_feature = np.load(handle).flatten()
             pics_f.append(p_feature)
+            sz = p_feature.shape[0]
+            print(sz)
     for subj in listdir(data_fn):
         subj_fn = data_fn + "/" + subj
         pics[subj] = {}

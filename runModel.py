@@ -31,7 +31,7 @@ import csv
 from os import listdir
 
 data_fn = "data/cohn-kanade"
-feature_fn = "data/hogFeature" #"data/featureExtracted"
+feature_fn = "data/featureExtracted" #"data/featureExtracted"
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -141,7 +141,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True)
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = False, True
+savedYet, toSave = True, True
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -200,7 +200,7 @@ print("done")
 pp.pprint(pics_f)
 
 
-K = 12
+K = 6
 c, a, r_l = kmeans(pics_f, K, 100, sz)
 print(c)
 print(a)

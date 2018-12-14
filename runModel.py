@@ -31,7 +31,7 @@ import csv
 from os import listdir
 
 data_fn = "data/cohn-kanade"
-feature_fn = "data/hogFeature" #"data/featureExtracted"
+feature_fn = "data/edgeFeature"#"data/featureExtracted"#"data/hogFeature"
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -50,9 +50,10 @@ H, W = io.imread(img_ex_fn, as_grey=True).shape
 emotions_dict = {}
 emotions_labels = []
 
-f = open(labels)
+f = open(labels, encoding='utf-8-sig')
 reader = csv.reader(f)
 for row in reader:
+    print(row)
     if (len(row[0]) != 3):
         if row[0][-2:] == "10" and row[1] == "001":
             row[0] = "010"
@@ -82,43 +83,62 @@ def dpm_featureExtract(image):
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
 
+        #edges = cv2.Canny(image,50,160)
+
         # loop over the face parts individually
+        forehead_topleft = (0,0)
+        forehead_topright = (0,0)
+        forehead_bottomleft = (0,0)
+        forehead_bottomright = (0,0)
         for (name, (i, j)) in face_utils.FACIAL_LANDMARKS_IDXS.items():
-            if name != "jaw":
-                # clone the original image so we can draw on it, then
-                # display the name of the face part on the image
-                clone = image.copy()#edges.copy()
-                cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
-                    0.7, (0, 0, 255), 2)
+            # clone the original image so we can draw on it, then
+            # display the name of the face part on the image
+            clone = image.copy()#edges.copy()
+            cv2.putText(clone, name, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                0.7, (0, 0, 255), 2)
 
-                # loop over the subset of facial landmarks, drawing the
-                # specific face part
-                for (x, y) in shape[i:j]:
-                    cv2.circle(clone, (x, y), 1, (0, 0, 255), -1)
+            # loop over the subset of facial landmarks, drawing the
+            # specific face part
+            for (x, y) in shape[i:j]:
+                cv2.circle(clone, (x, y), 1, (0, 0, 255), -1)
 
-                # extract the ROI of the face region as a separate image
-                (x, y, w, h) = cv2.boundingRect(np.array([shape[i:j]]))
-                roi = image[y:y + h, x:x + w]
-                #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
-                if name == "nose":
-                    roi = cv2.resize(roi, (50,100))
-                else:
-                    roi = cv2.resize(roi, (100,33))
+            # extract the ROI of the face region as a separate image
+            (x, y, w, h) = cv2.boundingRect(np.array([shape[i:j]]))
+            roi = image[y:y + h, x:x + w]
+            print(name)
+            if name == "right_eyebrow":
+                forehead_topright = (y,x)
+            if name == "left_eyebrow":
+                forehead_topleft = (y,x+w)
+            if name == "right_eye":
+                forehead_bottomright = (y+h,x)
+            if name == "left_eye":
+                forehead_bottomleft = (y+h,x+w)
+                #print(min(forehead_topleft[0],forehead_topright[0]))
+                #print(max(forehead_bottomleft[0],forehead_bottomright[0]))
+                #print(min(forehead_bottomleft[1],forehead_topleft[1]))
+                #print(max(forehead_bottomright[1],forehead_topright[1]))
+                roi = image[min(forehead_topleft[0],forehead_topright[0]):max(forehead_bottomleft[0],forehead_bottomright[0]),
+                        max(forehead_bottomright[1],forehead_topright[1]):min(forehead_bottomleft[1],forehead_topleft[1])]
+            #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
+            if name == "nose":
+                roi = cv2.resize(roi, (40,80))
+            elif name == "mouth" or name == "left_eye":
+                roi = cv2.resize(roi, (100,33))
+            # add facial feature
+            #print(roi.flatten())
+            roi = (roi - np.mean(roi)) / np.std(roi)
 
-                # add facial feature
-                #print(roi.flatten())
-                roi = (roi - np.mean(roi)) / np.std(roi)
-                # plt.subplot(1, 1, 1)
-                # plt.imshow(roi, cmap='gray')
-                # plt.show()
-
+            if name == "nose" or name == "mouth" or name == "left_eye":
+                #cv2.imshow("ROI", roi)
+                #cv2.waitKey(0)
                 features = np.append(features,roi.flatten())
-                #print(features)
+            #print(features)
 
     #print(features)
     return features
 
-def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True):
+def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True, edge=True):
     features_p = np.array([])
     if literal:
         features_p = img.flatten()
@@ -138,10 +158,13 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True)
         dpm_features = dpm_featureExtract(img)
         #print(dpm_features)
         features_p = np.append(features_p, dpm_features)
+    if edge:
+        edges_features = cv2.Canny(img,60,150)
+        features_p = np.append(features_p, edges_features.flatten())
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = True, True
+savedYet, toSave = False, True
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -159,7 +182,7 @@ if not savedYet:
                     img = io.imread(pic_fn, as_grey=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=True, norm=False, hogF=False, hogI=False, dpm=False)
+                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=True, edge=False)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)
@@ -195,10 +218,8 @@ else:
                     img = io.imread(pic_fn, as_gray=True)
                     pics_literal.append(img)
 
-
 print("done")
 pp.pprint(pics_f)
-
 
 K = 6
 c, a, r_l = kmeans(pics_f, K, 100, sz)

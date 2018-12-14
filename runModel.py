@@ -31,7 +31,7 @@ import csv
 from os import listdir
 
 data_fn = "data/cohn-kanade"
-feature_fn = "data/edgeFeature"#"data/featureExtracted"#"data/hogFeature"
+feature_fn = "data/dpmWithNoseFeature"#"data/featureExtracted"#"data/featureExtracted"
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -123,13 +123,13 @@ def dpm_featureExtract(image):
             #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
             if name == "nose":
                 roi = cv2.resize(roi, (40,80))
-            elif name == "mouth" or name == "left_eye":
+            if name == "mouth" or name == "left_eye":
                 roi = cv2.resize(roi, (100,33))
             # add facial feature
             #print(roi.flatten())
-            roi = (roi - np.mean(roi)) / np.std(roi)
+                roi = (roi - np.mean(roi)) / np.std(roi)
 
-            if name == "nose" or name == "mouth" or name == "left_eye":
+            if name == "mouth" or name == "left_eye" or name == "nose":
                 #cv2.imshow("ROI", roi)
                 #cv2.waitKey(0)
                 features = np.append(features,roi.flatten())
@@ -164,7 +164,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True,
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = False, True
+savedYet, toSave = True, True
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -182,7 +182,7 @@ if not savedYet:
                     img = io.imread(pic_fn, as_grey=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=True, edge=False)
+                        pic_f = featureExtract(img, literal=False, norm=True, hogF=False, hogI=False, dpm=False, edge=False)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)

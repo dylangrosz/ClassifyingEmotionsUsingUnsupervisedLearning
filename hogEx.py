@@ -17,6 +17,7 @@ import dlib
 import cv2
 import csv
 
+
 ex_fn = "data/face_03.png"
 img = io.imread(ex_fn, as_grey=True)
 hogFeature, hog_img = feature.hog(img, pixels_per_cell=(16, 16), visualise=True,

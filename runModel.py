@@ -31,7 +31,9 @@ import csv
 from os import listdir
 
 data_fn = "data/cohn-kanade"
-feature_fn = "data/dpmWithNoseFeature"#"data/featureExtracted"#"data/featureExtracted"
+feature_fn = "data/hogFeatureI"
+#feature_fn_folders = ["data/hogFeatureF"]
+feature_fn_folders = ["data/hogFeatureI"]#, "data/normFeature"]
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -123,6 +125,7 @@ def dpm_featureExtract(image):
             #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
             if name == "nose":
                 roi = cv2.resize(roi, (40,80))
+                roi = (roi - np.mean(roi)) / np.std(roi)
             if name == "mouth" or name == "left_eye":
                 roi = cv2.resize(roi, (100,33))
             # add facial feature
@@ -160,11 +163,13 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True,
         features_p = np.append(features_p, dpm_features)
     if edge:
         edges_features = cv2.Canny(img,60,150)
+        cv2.imshow("Image", edges_features)
+        cv2.waitKey(0)
         features_p = np.append(features_p, edges_features.flatten())
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = True, True
+savedYet, toSave = False, False
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -182,7 +187,7 @@ if not savedYet:
                     img = io.imread(pic_fn, as_grey=True)
                     H_i, W_i = img.shape
                     if H_i == H and W_i == W:
-                        pic_f = featureExtract(img, literal=False, norm=True, hogF=False, hogI=False, dpm=False, edge=False)
+                        pic_f = featureExtract(img, literal=False, norm=False, hogF=False, hogI=False, dpm=False, edge=True)
                         if toSave:
                             with open(feature_fn + "/" + sess + "_" + sess_l[p_i][:-4] + "_FE", 'wb') as handle:
                                 np.save(handle, pic_f)
@@ -198,11 +203,25 @@ if not savedYet:
             break
 else:
     for f_n in listdir(feature_fn):
+        '''
         with open(feature_fn + "/" + f_n, 'rb') as handle:
-            # img = pkl.load(handle)
             p_feature = np.load(handle).flatten()
             pics_f.append(p_feature)
             sz = p_feature.shape[0]
+            emotions_labels.append(emotions_dict[f_n[5:12]])
+        '''
+        #p_feature = np.array([])
+        p_feature = np.array([])
+        for folder in feature_fn_folders:
+            handle = open(folder + "/" + f_n, 'rb')
+                # img = pkl.load(handle)
+            curr_feature = np.array(np.load(handle).flatten())
+            p_feature = np.append(p_feature, curr_feature)
+            #np.append(p_feature, np.load(handle).flatten())
+
+        pics_f.append(p_feature)
+        #print(p_feature)
+        sz = p_feature.shape[0]
         emotions_labels.append(emotions_dict[f_n[5:12]])
     for subj in listdir(data_fn):
         subj_fn = data_fn + "/" + subj
@@ -223,8 +242,8 @@ pp.pprint(pics_f)
 
 K = 6
 c, a, r_l = kmeans(pics_f, K, 100, sz)
-print(c)
-print(a)
+#print(c)
+#print(a)
 center_assignments = {}
 center_emotions = {}
 for i in a:
@@ -236,14 +255,14 @@ for i in a:
         center_assignments[k] = [i]
         center_emotions[k] = [emotions_labels[i]]
 
-print(center_assignments)
-print(center_emotions)
+#print(center_assignments)
+#print(center_emotions)
 
 cluster_labels = {}
 for k in center_emotions:
     cluster_labels[k] = max(set(center_emotions[k]), key=center_emotions[k].count)
 
-print(cluster_labels)
+#print(cluster_labels)
 total_mislabel, total_ex = 0, 0
 for c in cluster_labels:
     emotion = cluster_labels[c]

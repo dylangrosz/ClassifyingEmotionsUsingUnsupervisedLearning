@@ -32,8 +32,8 @@ from os import listdir
 
 data_fn = "data/cohn-kanade"
 feature_fn = "data/hogFeatureI"
-#feature_fn_folders = ["data/hogFeatureF"]
-feature_fn_folders = ["data/hogFeatureI"]#, "data/normFeature"]
+# add to feature_fn_folders the folders that you want to get saved features from
+feature_fn_folders = ["data/hogFeatureI"]
 img_ex_fn = "data/cohn-kanade/S010/001/S010_001_01594215.png"
 labels = "data/labels.csv"
 
@@ -61,7 +61,6 @@ for row in reader:
             row[0] = "010"
         else:
             row[0] = "0" + row[0]
-    #print(row[0] + "_" + row[1])
     emotions_dict[row[0] + "_" + row[1]] = row[2]
 emotions_dict["094_002"] = "na"
 emotions_dict["100_001"] = "na"
@@ -72,11 +71,6 @@ def dpm_featureExtract(image):
     predictor = dlib.shape_predictor("detectFaceParts/shape_predictor_68_face_landmarks.dat")
 
     gray = image
-    #edges = cv2.Canny(image ,60,200)
-
-    #gray = imutils.resize(image, width=500)
-    #gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-
     rects = detector(gray, 1)
 
     for (i, rect) in enumerate(rects):
@@ -84,8 +78,6 @@ def dpm_featureExtract(image):
     # convert the landmark (x, y)-coordinates to a NumPy array
         shape = predictor(gray, rect)
         shape = face_utils.shape_to_np(shape)
-
-        #edges = cv2.Canny(image,50,160)
 
         # loop over the face parts individually
         forehead_topleft = (0,0)
@@ -116,29 +108,16 @@ def dpm_featureExtract(image):
                 forehead_bottomright = (y+h,x)
             if name == "left_eye":
                 forehead_bottomleft = (y+h,x+w)
-                #print(min(forehead_topleft[0],forehead_topright[0]))
-                #print(max(forehead_bottomleft[0],forehead_bottomright[0]))
-                #print(min(forehead_bottomleft[1],forehead_topleft[1]))
-                #print(max(forehead_bottomright[1],forehead_topright[1]))
                 roi = image[min(forehead_topleft[0],forehead_topright[0]):max(forehead_bottomleft[0],forehead_bottomright[0]),
                         max(forehead_bottomright[1],forehead_topright[1]):min(forehead_bottomleft[1],forehead_topleft[1])]
-            #roi = imutils.resize(roi, height=500, width=250, inter=cv2.INTER_CUBIC)
             if name == "nose":
                 roi = cv2.resize(roi, (40,80))
                 roi = (roi - np.mean(roi)) / np.std(roi)
             if name == "mouth" or name == "left_eye":
                 roi = cv2.resize(roi, (100,33))
-            # add facial feature
-            #print(roi.flatten())
                 roi = (roi - np.mean(roi)) / np.std(roi)
-
             if name == "mouth" or name == "left_eye" or name == "nose":
-                #cv2.imshow("ROI", roi)
-                #cv2.waitKey(0)
                 features = np.append(features,roi.flatten())
-            #print(features)
-
-    #print(features)
     return features
 
 def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True, edge=True):
@@ -169,7 +148,7 @@ def featureExtract(img, literal=True, norm=True, hogF=True, hogI=True, dpm=True,
     return features_p
 
 # ADJUST THESE FOR SAVING AND REUSING
-savedYet, toSave = False, False
+savedYet, toSave = False, True
 cnt = 0
 num_subj = 1000
 if not savedYet:
@@ -203,24 +182,13 @@ if not savedYet:
             break
 else:
     for f_n in listdir(feature_fn):
-        '''
-        with open(feature_fn + "/" + f_n, 'rb') as handle:
-            p_feature = np.load(handle).flatten()
-            pics_f.append(p_feature)
-            sz = p_feature.shape[0]
-            emotions_labels.append(emotions_dict[f_n[5:12]])
-        '''
-        #p_feature = np.array([])
         p_feature = np.array([])
         for folder in feature_fn_folders:
             handle = open(folder + "/" + f_n, 'rb')
-                # img = pkl.load(handle)
             curr_feature = np.array(np.load(handle).flatten())
             p_feature = np.append(p_feature, curr_feature)
-            #np.append(p_feature, np.load(handle).flatten())
 
         pics_f.append(p_feature)
-        #print(p_feature)
         sz = p_feature.shape[0]
         emotions_labels.append(emotions_dict[f_n[5:12]])
     for subj in listdir(data_fn):
@@ -237,13 +205,10 @@ else:
                     img = io.imread(pic_fn, as_gray=True)
                     pics_literal.append(img)
 
-print("done")
 pp.pprint(pics_f)
 
 K = 6
 c, a, r_l = kmeans(pics_f, K, 100, sz)
-#print(c)
-#print(a)
 center_assignments = {}
 center_emotions = {}
 for i in a:
@@ -255,14 +220,10 @@ for i in a:
         center_assignments[k] = [i]
         center_emotions[k] = [emotions_labels[i]]
 
-#print(center_assignments)
-#print(center_emotions)
-
 cluster_labels = {}
 for k in center_emotions:
     cluster_labels[k] = max(set(center_emotions[k]), key=center_emotions[k].count)
 
-#print(cluster_labels)
 total_mislabel, total_ex = 0, 0
 for c in cluster_labels:
     emotion = cluster_labels[c]
@@ -282,7 +243,6 @@ for i in range(K):
             if iter_img < len(plt_assignments[i]):
                 plt.subplot(3, 3, iter_img + 1)
                 r_choice = random.choice(plt_assignments[i])
-                #print(pics_literal[r_choice].shape)
                 plt.imshow(pics_literal[r_choice].reshape((H, W)), cmap='gray')
                 ind = plt_assignments[i].index(r_choice)
                 plt_assignments[i].pop(ind)
